@@ -11,7 +11,7 @@ function applyLang(lang){
     const val = el.getAttribute(`data-${lang}`);
     if (val) el.innerHTML = val;
   });
-  langBtn.textContent = lang === 'en' ? 'FR' : 'EN';
+  if (langBtn) langBtn.textContent = lang === 'en' ? 'FR' : 'EN';
   localStorage.setItem('yv-lang', lang);
 }
 
