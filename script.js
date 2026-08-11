@@ -15,13 +15,15 @@ function applyLang(lang){
   localStorage.setItem('yv-lang', lang);
 }
 
-langBtn.addEventListener('click', () => {
-  currentLang = currentLang === 'en' ? 'fr' : 'en';
-  applyLang(currentLang);
-});
+if (langBtn){
+  langBtn.addEventListener('click', () => {
+    currentLang = currentLang === 'en' ? 'fr' : 'en';
+    applyLang(currentLang);
+  });
+}
 
-/* ---------- Scroll reveal (fade/blur) + video curtain reveal ---------- */
-const revealEls = document.querySelectorAll('.reveal, .cat-video-slot');
+/* ---------- Scroll reveal ---------- */
+const revealEls = document.querySelectorAll('.reveal');
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry, i) => {
     if (entry.isIntersecting){
@@ -32,6 +34,18 @@ const revealObserver = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.15 });
 revealEls.forEach(el => revealObserver.observe(el));
+
+/* ---------- Project image reveal mask ---------- */
+const projectImages = document.querySelectorAll('.project-image');
+const projectObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){
+      entry.target.classList.add('is-visible');
+      projectObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.25 });
+projectImages.forEach(el => projectObserver.observe(el));
 
 /* ---------- Timeline progress fill ---------- */
 const timelineProgress = document.querySelector('.timeline-progress');
@@ -44,52 +58,26 @@ if (timelineProgress){
       }
     });
   }, { threshold: 0.4 });
-  timelineObserver.observe(document.querySelector('.timeline'));
+  const timelineEl = document.querySelector('.timeline');
+  if (timelineEl) timelineObserver.observe(timelineEl);
 }
 
-/* ---------- Smooth section transitions: fade sections as they leave viewport ---------- */
-if (!prefersReducedMotion){
-  document.querySelectorAll('.section, .hero').forEach(section => {
-    const fadeObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const ratio = entry.intersectionRatio;
-        section.style.opacity = Math.max(0.55, ratio);
-        section.style.transform = `translateY(${(1 - ratio) * 12}px)`;
-      });
-    }, { threshold: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1] });
-    section.classList.add('section-fade');
-    fadeObserver.observe(section);
-  });
+/* ---------- Hide nav on scroll down ---------- */
+let lastScroll = 0;
+const nav = document.querySelector('.nav');
+if (nav){
+  window.addEventListener('scroll', () => {
+    const current = window.scrollY;
+    if (current > lastScroll && current > 120){
+      nav.classList.add('nav-hidden');
+    } else {
+      nav.classList.remove('nav-hidden');
+    }
+    lastScroll = current;
+  }, { passive: true });
 }
 
-/* ---------- Custom cursor: lerped dot + glow (fine pointer, motion allowed) ---------- */
-if (isFinePointer && !prefersReducedMotion){
-  const dot = document.createElement('div');
-  dot.className = 'cursor-dot';
-  document.body.appendChild(dot);
-  const glow = document.getElementById('cursor-glow');
-
-  let mouseX = 0, mouseY = 0, dotX = 0, dotY = 0, glowX = 0, glowY = 0;
-  window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
-
-  function animateCursor(){
-    dotX += (mouseX - dotX) * 0.35;
-    dotY += (mouseY - dotY) * 0.35;
-    glowX += (mouseX - glowX) * 0.12;
-    glowY += (mouseY - glowY) * 0.12;
-    dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%,-50%)`;
-    if (glow) glow.style.transform = `translate(${glowX}px, ${glowY}px) translate(-50%,-50%)`;
-    requestAnimationFrame(animateCursor);
-  }
-  animateCursor();
-
-  document.querySelectorAll('a, button, .tilt, input, select, textarea').forEach(el => {
-    el.addEventListener('mouseenter', () => dot.classList.add('hovering'));
-    el.addEventListener('mouseleave', () => dot.classList.remove('hovering'));
-  });
-}
-
-/* ---------- Magnetic buttons ---------- */
+/* ---------- Magnetic buttons + tilt on cards (desktop, motion only) ---------- */
 if (isFinePointer && !prefersReducedMotion){
   document.querySelectorAll('.magnetic').forEach(btn => {
     btn.addEventListener('mousemove', (e) => {
@@ -100,10 +88,7 @@ if (isFinePointer && !prefersReducedMotion){
     });
     btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0,0)'; });
   });
-}
 
-/* ---------- Tilt effect on cards ---------- */
-if (isFinePointer && !prefersReducedMotion){
   document.querySelectorAll('.tilt').forEach(card => {
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
@@ -116,19 +101,6 @@ if (isFinePointer && !prefersReducedMotion){
     });
   });
 }
-
-/* ---------- Hide nav on scroll down, show on scroll up ---------- */
-let lastScroll = 0;
-const nav = document.querySelector('.nav');
-window.addEventListener('scroll', () => {
-  const current = window.scrollY;
-  if (current > lastScroll && current > 120){
-    nav.classList.add('nav-hidden');
-  } else {
-    nav.classList.remove('nav-hidden');
-  }
-  lastScroll = current;
-}, { passive: true });
 
 /* ---------- FAQ accordion ---------- */
 document.querySelectorAll('.accordion-item').forEach(item => {
@@ -159,16 +131,15 @@ document.querySelectorAll('.pick-package').forEach(btn => {
     const pkg = card.getAttribute('data-package');
     const select = document.getElementById('package');
     if (select) select.value = pkg;
-    document.getElementById('contact').scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-    setTimeout(() => document.getElementById('name')?.focus(), prefersReducedMotion ? 0 : 600);
+    const contact = document.getElementById('contact');
+    if (contact){
+      contact.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+      setTimeout(() => document.getElementById('name')?.focus(), prefersReducedMotion ? 0 : 600);
+    }
   });
 });
 
-/* ---------- Quote form submission (Formspree) ----------
-   1. Create a free account at https://formspree.io
-   2. Create a new form, copy its endpoint (e.g. https://formspree.io/f/abcd1234)
-   3. Replace the placeholder in index.html action attribute.
---------------------------------------------------------- */
+/* ---------- Quote form submission (Formspree) ---------- */
 const quoteForm = document.getElementById('quote-form');
 if (quoteForm){
   quoteForm.addEventListener('submit', async (e) => {
@@ -204,6 +175,7 @@ document.querySelectorAll('[data-calendly-open]').forEach(btn => {
   });
 });
 
+/* ---------- Language on load ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('yv-lang');
   if (saved && saved !== 'en'){
