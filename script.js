@@ -29,6 +29,20 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 revealEls.forEach(el => observer.observe(el));
 
+/* ---------- Timeline progress fill ---------- */
+const timelineProgress = document.querySelector('.timeline-progress');
+if (timelineProgress){
+  const timelineObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        timelineProgress.style.width = '100%';
+        timelineObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  timelineObserver.observe(document.querySelector('.timeline'));
+}
+
 /* ---------- Cursor glow follow (desktop only) ---------- */
 const glow = document.getElementById('cursor-glow');
 if (window.matchMedia('(pointer: fine)').matches){
@@ -47,6 +61,43 @@ document.querySelectorAll('.magnetic').forEach(btn => {
   });
   btn.addEventListener('mouseleave', () => {
     btn.style.transform = 'translate(0,0)';
+  });
+});
+
+/* ---------- Tilt effect on cards (desktop only) ---------- */
+if (window.matchMedia('(pointer: fine)').matches){
+  document.querySelectorAll('.tilt').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg) translateY(-2px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(600px) rotateY(0) rotateX(0)';
+    });
+  });
+}
+
+/* ---------- FAQ accordion ---------- */
+document.querySelectorAll('.accordion-item').forEach(item => {
+  const head = item.querySelector('.accordion-head');
+  const body = item.querySelector('.accordion-body');
+  head.addEventListener('click', () => {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.accordion-item.open').forEach(openItem => {
+      if (openItem !== item){
+        openItem.classList.remove('open');
+        openItem.querySelector('.accordion-body').style.maxHeight = null;
+      }
+    });
+    if (isOpen){
+      item.classList.remove('open');
+      body.style.maxHeight = null;
+    } else {
+      item.classList.add('open');
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
   });
 });
 
