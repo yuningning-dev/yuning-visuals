@@ -47,6 +47,20 @@ const projectObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.25 });
 projectImages.forEach(el => projectObserver.observe(el));
 
+/* ---------- Movie poster cinematic reveal sequence ---------- */
+const moviePoster = document.getElementById('movie-poster');
+if (moviePoster){
+  const posterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        moviePoster.classList.add('poster-animate');
+        posterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.35 });
+  posterObserver.observe(moviePoster);
+}
+
 /* ---------- Timeline progress fill ---------- */
 const timelineProgress = document.querySelector('.timeline-progress');
 if (timelineProgress){
